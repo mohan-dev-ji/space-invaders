@@ -2,76 +2,43 @@ import turtle
 import math
 import random
 
-# Set up the screen
-win = turtle.Screen()
-win.bgcolor("black")
-win.title("Space Invaders")
-win.setup(width=800, height=600)
-win.tracer(0)
+################################# CLASSES #################################
 
+# Create Player class
+class Player(turtle.Turtle):
+    def __init__(self):
+        super().__init__()
+        self.color("green")
+        self.shape("triangle")
+        self.penup()
+        self.speed(0)
+        self.setposition(0, -250)
+        self.setheading(90)
+        self.lives = 3
+        self.player_speed = 15
 
-# Player setup
-player = turtle.Turtle()
-player.color("green")
-player.shape("triangle")
-player.penup()
-player.speed(0)
-player.setposition(0, -250)
-player.setheading(90)
+    def move_left(self):
+        x = self.xcor()
+        x -= player_speed
+        if x < -380:
+            x = -380
+        self.setx(x)
 
-player_speed = 15
+    def move_right(self):
+        x = self.xcor()
+        x += player_speed
+        if x > 380:
+            x = 380
+        self.setx(x)
 
-def move_left():
-    x = player.xcor()
-    x -= player_speed
-    if x < -380:
-        x = -380
-    player.setx(x)
+    # to do add shoot function after creating the Bullet class  
+    def shoot(self):
+        if not bullet.isvisible():
+            bullet.setposition(self.xcor(), self.ycor() + 10)
+            bullet.showturtle()
+# Create Bullet class
 
-
-def move_right():
-    x = player.xcor()
-    x += player_speed
-    if x > 380:
-        x = 380
-    player.setx(x)
-
-# Bullet setup
-bullet = turtle.Turtle()
-bullet.color("yellow")
-bullet.shape("triangle")
-bullet.penup()
-bullet.speed(0)
-bullet.setheading(90)
-bullet.shapesize(stretch_wid=0.5, stretch_len=1)
-bullet.hideturtle()
-
-# Bullet state
-bullet_speed = 20
-bullet_state = "ready"
-
-def fire_bullet():
-    global bullet_state
-    if bullet_state == "ready":
-        bullet_state = "fire"
-        x = player.xcor()
-        y = player.ycor() + 10
-        bullet.setposition(x, y)
-        bullet.showturtle()
-        print("Bullet fired from", bullet.position())
-
-def move_bullet():
-    global bullet_state
-    if bullet_state == "fire":
-        y = bullet.ycor()
-        y += bullet_speed
-        bullet.sety(y)
-        if y > 275:
-            bullet.hideturtle()
-            bullet_state = "ready"
-            print("Bullet reset to ready state")
-
-# Create multiple enemies
+# Create Enemy class
 class Enemy(turtle.Turtle):
     def __init__(self, color, x, y):
         super().__init__()
@@ -104,30 +71,61 @@ class EnemyBullet(turtle.Turtle):
     def is_not_visible(self):
         return not self.isvisible()
 
-# num_enemies = 8
-enemies = []
-enemy_speed = 1
+class Bullet(turtle.Turtle):
+    def __init__(self):
+        super().__init__()
+        self.color("yellow")
+        self.shape("triangle")
+        self.penup()
+        self.speed(0)
+        self.setheading(90)
+        self.shapesize(stretch_wid=0.5, stretch_len=1)
+        self.hideturtle()
 
-# Red enemies
-for i in range(2):
-    for j in range(10):
-        x = -380 + j * 40
-        y = 100 + i * 40
-        enemies.append(Enemy("red", x, y))
+    def move(self):
+        if self.isvisible():
+            y = self.ycor()
+            y += 20
+            self.sety(y)
+            if self.ycor() > 275:
+                self.hideturtle()
 
-for i in range(2, 4):
-    for j in range(10):
-        x = -380 + j * 40
-        y = 100 + i * 40
-        enemies.append(Enemy("yellow", x, y))
+################################# FUNCTIONS #################################
 
+# def move_left():
+#     x = player.xcor()
+#     x -= player_speed
+#     if x < -380:
+#         x = -380
+#     player.setx(x)
 
+# def move_right():
+#     x = player.xcor()
+#     x += player_speed
+#     if x > 380:
+#         x = 380
+#     player.setx(x)
 
-# for enemy in enemies:
-#     print(enemy)
+# def fire_bullet():
+#     global bullet_state
+#     if bullet_state == "ready":
+#         bullet_state = "fire"
+#         x = player.xcor()
+#         y = player.ycor() + 10
+#         bullet.setposition(x, y)
+#         bullet.showturtle()
+#         print("Bullet fired from", bullet.position())
 
-# Create enemy bullets
-enemy_bullets = [EnemyBullet("white", 5) for _ in range(10)]
+# def move_bullet():
+#     global bullet_state
+#     if bullet_state == "fire":
+#         y = bullet.ycor()
+#         y += bullet_speed
+#         bullet.sety(y)
+#         if y > 275:
+#             bullet.hideturtle()
+#             bullet_state = "ready"
+#             print("Bullet reset to ready state")
 
 def move_enemies():
     global enemy_speed
@@ -144,25 +142,13 @@ def move_enemies():
                 y = e.ycor()
                 y -= 40
                 e.sety(y)
-            
 
+def move_bullet():
+    bullet.move()
 
 def is_collision(t1, t2):
     distance = math.sqrt((t1.xcor() - t2.xcor())**2 + (t1.ycor() - t2.ycor())**2)
     return distance < 15
-
-# Score setup
-score = 0
-
-# Score display
-score_pen = turtle.Turtle()
-score_pen.speed(0)
-score_pen.color("green")
-score_pen.penup()
-score_pen.setposition(-390, 260)
-score_string = "Score: %s" % score
-score_pen.write(score_string, False, align="left", font=("Arial", 16, "bold"))
-score_pen.hideturtle()
 
 def update_score():
     global score
@@ -252,11 +238,69 @@ def press_enter():
     go_turtle.goto(0, -20)
     go_turtle.write("press enter to play again", align="center", font=("Arial", 30, "normal"))
 
+################################# GAME SET UP #################################
+
+# Set up the screen
+win = turtle.Screen()
+win.bgcolor("black")
+win.title("Space Invaders")
+win.setup(width=800, height=600)
+win.tracer(0)
+
+player_speed = 15
+
+# Bullet setup
+# bullet = turtle.Turtle()
+# bullet.color("yellow")
+# bullet.shape("triangle")
+# bullet.penup()
+# bullet.speed(0)
+# bullet.setheading(90)
+# bullet.shapesize(stretch_wid=0.5, stretch_len=1)
+# bullet.hideturtle()
+# Bullet state
+bullet_speed = 20
+bullet_state = "ready"
+# num_enemies = 8
+enemies = []
+enemy_speed = 1
+
+# Red enemies
+for i in range(2):
+    for j in range(10):
+        x = -380 + j * 40
+        y = 100 + i * 40
+        enemies.append(Enemy("red", x, y))
+
+for i in range(2, 4):
+    for j in range(10):
+        x = -380 + j * 40
+        y = 100 + i * 40
+        enemies.append(Enemy("yellow", x, y))
+
+# Create enemy bullets
+enemy_bullets = [EnemyBullet("white", 5) for _ in range(10)]
+
+# Score setup
+score = 0
+player = Player()
+bullet = Bullet()
+# Score display
+score_pen = turtle.Turtle()
+score_pen.speed(0)
+score_pen.color("green")
+score_pen.penup()
+score_pen.setposition(-390, 260)
+score_string = "Score: %s" % score
+score_pen.write(score_string, False, align="left", font=("Arial", 16, "bold"))
+score_pen.hideturtle()
+
+
 # Keyboard bindings
 win.listen()
-win.onkey(move_left, "Left")
-win.onkey(move_right, "Right")
-win.onkey(fire_bullet, "space") 
+win.onkey(player.move_left, "Left")
+win.onkey(player.move_right, "Right")
+win.onkey(player.shoot, "space") 
 
 # game_over = False
 while True:
