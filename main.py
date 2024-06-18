@@ -8,8 +8,7 @@ import random
 class Player(turtle.Turtle):
     def __init__(self):
         super().__init__()
-        self.color("green")
-        self.shape("triangle")
+        self.shape("img/player.gif")
         self.penup()
         self.speed(0)
         self.setposition(0, -250)
@@ -18,6 +17,8 @@ class Player(turtle.Turtle):
         self.player_speed = 15
 
     def move_left(self):
+        if not game_on:
+            return
         x = self.xcor()
         x -= player_speed
         if x < -380:
@@ -25,6 +26,8 @@ class Player(turtle.Turtle):
         self.setx(x)
 
     def move_right(self):
+        if not game_on:
+            return
         x = self.xcor()
         x += player_speed
         if x > 380:
@@ -43,8 +46,7 @@ class Player(turtle.Turtle):
 class Bullet(turtle.Turtle):
     def __init__(self):
         super().__init__()
-        self.color("yellow")
-        self.shape("triangle")
+        self.shape("img/bullet.gif")
         self.penup()
         self.speed(0)
         self.setheading(90)
@@ -63,22 +65,24 @@ class Bullet(turtle.Turtle):
 class Enemy(turtle.Turtle):
     def __init__(self, color, x, y):
         super().__init__()
+        if color == "red":        
+            self.shape("img/alien1.gif")
+        if color == "yellow":        
+            self.shape("img/alien2.gif")
         self.color(color)
-        self.shape("square")
         self.penup()
         self.speed(0)
         self.goto(x, y)
 
-    
 # Enemy bullet class
 class EnemyBullet(turtle.Turtle):
     def __init__(self, color, speed):
         super().__init__()
         self.color(color)
-        self.shape("triangle")
+        self.shape("img/enemy-bullet.gif")
         self.penup()
         self.speed(0)
-        self.setheading(270)
+        # self.setheading(270)
         
         self.hideturtle()
 
@@ -94,10 +98,24 @@ class EnemyBullet(turtle.Turtle):
         if not self.isvisible():
             self.setposition(shooter.xcor(), shooter .ycor() - 10)
             self.showturtle()
+class Explosion(turtle.Turtle):
+    def __init__(self):
+        super().__init__()
+        self.shape("img/explosion.gif")
+        self.penup()
+        self.hideturtle()
+
+    def explode(self, x, y):
+        self.goto(x, y)
+        self.showturtle()
+        win.update()
+        turtle.ontimer(self.hideturtle, 10)  # Hide after 300ms
 
 ################################# FUNCTIONS #################################
 def move_enemies():
     global enemy_speed, enemies, bullet
+    if not game_on:
+        return
     for enemy in enemies:   
         x = enemy.xcor()
         x += enemy_speed
@@ -119,10 +137,14 @@ def move_enemies():
             update_score()
 
 def move_bullet():
+    if not game_on:
+        return
     bullet.move()
 
 def move_enemy_bullets():
     global e_bullet
+    if not game_on:
+        return
     for e_bullet in enemy_bullets:
         e_bullet.move()
         
@@ -138,8 +160,11 @@ def randomly_shoot_bullets():
             print("no enemies")
 
 def is_collision(t1, t2):
+    global explosion
     distance = math.sqrt((t1.xcor() - t2.xcor())**2 + (t1.ycor() - t2.ycor())**2)
-    return distance < 15
+    if distance < 20:
+        explosion.explode(t1.xcor(), t1.ycor())
+    return distance < 20
 
 def update_score():
     global score
@@ -160,39 +185,18 @@ def check_game_over():
             return True
     return False
 
-def reset_game():
-    global player, bullet, enemies, enemy_bullets, score
-    player.hideturtle()
-    bullet.hideturtle()
-    for enemy in enemies:
-        enemy.hideturtle()
-    for e_bullet in enemy_bullets:
-        e_bullet.hideturtle()
-
-    player = Player()
-    bullet = Bullet()
-    enemies = []
-    enemy_bullets = []
-    score = 0
-    score_pen.clear()
-    score_pen.write(f"Score: {score}", align="left", font=("Courier", 18, "normal"))
-    # message_display.clear()
-
-    create_enemies()
-    player.showturtle()
-
 def create_enemies():
     global enemies
     # Red enemies
     for i in range(2):
         for j in range(10):
-            x = -380 + j * 40
+            x = -380 + j * 50
             y = 100 + i * 40
             enemies.append(Enemy("red", x, y))
     # Yellow enemies
     for i in range(2, 4):
         for j in range(10):
-            x = -380 + j * 40
+            x = -380 + j * 50
             y = 100 + i * 40
             enemies.append(Enemy("yellow", x, y))
 
@@ -223,25 +227,34 @@ def press_enter():
     go_turtle.penup()
     go_turtle.hideturtle()
     go_turtle.goto(0, -20)
-    go_turtle.write("press enter to play again", align="center", font=("Arial", 30, "normal"))
+    go_turtle.write("Press enter to play again", align="center", font=("Arial", 30, "normal"))
 
 def break_out():
-    global running
+    global running, enemy_speed
+    enemy_speed = 0
     running = False
 
 ################################# GAME SET UP #################################
 
 def play_game():
-    global win, player, bullet, enemies, enemy_bullets, score, player_speed, enemy_speed, bullet_speed, score_pen, running, game_on
+    global win, player, bullet, enemies, enemy_bullets, score, player_speed, enemy_speed, bullet_speed, score_pen, running, game_on, explosion
     # Set up the screen
     win = turtle.Screen()
     win.bgcolor("black")
     win.title("Space Invaders")
     win.setup(width=800, height=600)
     win.tracer(0)
+    # Register the custom GIFs
+    win.addshape("img/player.gif")
+    win.addshape("img/alien1.gif")
+    win.addshape("img/alien2.gif")
+    win.addshape("img/bullet.gif")
+    win.addshape("img/enemy-bullet.gif")
+    win.addshape("img/explosion.gif")
 
     player = Player()
     bullet = Bullet()
+    explosion = Explosion()
     enemies = []
     enemy_bullets = [EnemyBullet("white", 5) for _ in range(10)]
     score = 0
